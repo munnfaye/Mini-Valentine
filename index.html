@@ -263,25 +263,6 @@
       transform: scale(0.98);
     }
 
-    .carousel-dots {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #ddd;
-      transition: background .3s ease;
-    }
-
-    .dot.active {
-      background: var(--yes);
-    }
-
     /* Mobile optimizations */
     @media (max-width: 600px) {
       h1 {
@@ -499,7 +480,7 @@
     </section>
 
     <section class="result" id="result" aria-live="assertive" aria-atomic="true">
-      <h2>I know you will say YES <span class="emoji">🎉</span></h2>
+      <h2>I know you will say YES <span class="emoji">😉</span></h2>
       <img
         class="celebration"
         src="celebration.jpg"
@@ -515,7 +496,6 @@
           <button class="carousel-btn" id="prevBtn" aria-label="Previous reason">← Previous</button>
           <button class="carousel-btn" id="nextBtn" aria-label="Next reason">Next →</button>
         </nav>
-        <div class="carousel-dots" role="tablist" aria-label="Carousel position indicators" id="carouselDots"></div>
       </div>
     </section>
   </main>
@@ -524,9 +504,9 @@
   <div class="popup-overlay" id="popupOverlay" role="dialog" aria-labelledby="popupTitle" aria-describedby="popupMessage">
     <div class="popup">
       <img class="popup-gif" src="disappointed.gif" alt="Disappointed reaction" />
-      <h3 id="popupTitle">Nice try!</h3>
+      <h3 id="popupTitle">HAAAAA want to say no?!</h3>
       <p id="popupMessage">The "No" button is just playing hard to get... just like you! <span class="emoji">💕</span></p>
-      <button class="popup-btn" id="popupClose" aria-label="Close popup">Got it! <span class="emoji">😄</span></button>
+      <button class="popup-btn" id="popupClose" aria-label="Close popup">Ok lor </button>
     </div>
   </div>
 
@@ -561,42 +541,11 @@
 
     let currentReasonIndex = 0;
     const carouselText = document.getElementById('carouselText');
-    const carouselDots = document.getElementById('carouselDots');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
 
-    function createDots() {
-      carouselDots.innerHTML = '';
-      loveReasons.forEach((_, index) => {
-        const dot = document.createElement('button');
-        dot.className = 'dot';
-        dot.setAttribute('role', 'tab');
-        dot.setAttribute('aria-label', `Go to reason ${index + 1}`);
-        dot.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
-        dot.style.border = 'none';
-        dot.style.cursor = 'pointer';
-        dot.style.padding = '4px';
-        if (index === 0) dot.classList.add('active');
-        
-        dot.addEventListener('click', () => {
-          currentReasonIndex = index;
-          updateCarousel();
-        });
-        
-        carouselDots.appendChild(dot);
-      });
-    }
-
     function updateCarousel() {
       carouselText.textContent = loveReasons[currentReasonIndex];
-      
-      // Update dots
-      const dots = carouselDots.querySelectorAll('.dot');
-      dots.forEach((dot, index) => {
-        const isActive = index === currentReasonIndex;
-        dot.classList.toggle('active', isActive);
-        dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      });
       
       // Announce to screen readers
       carouselText.setAttribute('aria-label', `Reason ${currentReasonIndex + 1} of ${loveReasons.length}: ${loveReasons[currentReasonIndex]}`);
@@ -627,7 +576,7 @@
       }
     });
 
-    createDots();
+    // Initialize carousel
     updateCarousel();
 
     /* ---------- CONFETTI ---------- */
@@ -791,13 +740,20 @@
     /* ---------- YES CLICK ---------- */
     yesBtn.addEventListener("click", () => {
       try {
+        // Hide the question section elements
+        document.getElementById("question").style.display = "none";
+        document.querySelector(".art").style.display = "none";
         zone.style.display = "none";
+        
+        // Show the result
         result.style.display = "block";
         
         resizeConfettiCanvas();
         fullScreenConfetti();
       } catch (error) {
         // Still show the result even if confetti fails
+        document.getElementById("question").style.display = "none";
+        document.querySelector(".art").style.display = "none";
         zone.style.display = "none";
         result.style.display = "block";
       }
