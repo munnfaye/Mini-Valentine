@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Will you be my Valentine?</title>
+  <meta name="description" content="A special Valentine's Day message for Kien Wei" />
+
+  <!-- Confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      /* Softer, soothing pink palette */
+      --bg1: #ffe4f0;
+      --bg2: #fff5fa;
+      --card: #ffffffdd;
+      --yes: #ffb3d9;
+      --yesHover: #ff99cc;
+      --accent: #ffc9e3;
+    }
+
+    * { 
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at top, var(--bg2), var(--bg1));
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow: hidden;
+      padding: 16px;
+    }
+
+    /* Force iOS/Apple emoji rendering */
+    .emoji, .popup-emoji {
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+      font-style: normal;
+      font-weight: normal;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* FULL-SCREEN CONFETTI CANVAS */
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .card {
+      width: min(720px, 92vw);
+      padding: 40px 32px;
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      border-radius: 28px;
+      text-align: center;
+      box-shadow: 0 20px 70px rgba(0,0,0,.12);
+    }
+
+    /* COUNTDOWN TIMER */
+    .countdown {
+      background: linear-gradient(135deg, var(--accent), var(--yes));
+      color: #fff;
+      padding: 20px 32px;
+      border-radius: 16px;
+      margin: 0 auto 20px;
+      width: fit-content;
+      box-shadow: 0 8px 24px rgba(255,179,217,.35);
+    }
+
+    .countdown-label {
+      font-size: 15px;
+      opacity: 0.95;
+      font-weight: 500;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    }
+
+    .countdown-number {
+      font-size: clamp(48px, 8vw, 72px);
+      font-weight: 300;
+      display: block;
+      margin: 8px 0;
+      letter-spacing: -0.04em;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+      line-height: 0.9;
+    }
+
+    .countdown-days-label {
+      font-size: 18px;
+      opacity: 0.9;
+      font-weight: 400;
+      letter-spacing: 0.03em;
+      text-transform: lowercase;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    .art {
+      width: min(280px, 85vw);
+      margin: 0 auto 20px;
+      display: block;
+      filter: drop-shadow(0 12px 20px rgba(0,0,0,.1));
+      border-radius: 16px;
+    }
+
+    h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      margin: 20px 0 24px;
+      font-weight: 400;
+      letter-spacing: -0.03em;
+      line-height: 1.3;
+      color: #2d2d2d;
+    }
+
+    .button-zone {
+      position: relative;
+      width: min(520px, 92%);
+      height: 150px;
+      margin: 0 auto;
+      touch-action: none;
+    }
+
+    button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 18px 32px;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,.12);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Focus indicators for accessibility */
+    button:focus-visible {
+      outline: 3px solid #ff99cc;
+      outline-offset: 4px;
+    }
+
+    #yesBtn {
+      left: 18%;
+      background: var(--yes);
+      color: #fff;
+    }
+    #yesBtn:hover { 
+      background: var(--yesHover);
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 12px 28px rgba(255,179,217,.4);
+    }
+    #yesBtn:active { transform: translateY(-50%) scale(0.98); }
+
+    #noBtn {
+      left: 62%;
+      background: #f3f4f6;
+      color: #374151;
+    }
+    #noBtn:hover { 
+      background: #e5e7eb;
+      transform: translateY(-50%) scale(1.02);
+    }
+
+    .result {
+      display: none;
+      margin-top: 18px;
+      animation: pop .35s ease;
+    }
+
+    .result h2 {
+      font-size: clamp(36px, 6vw, 56px);
+      margin: 16px 0 20px;
+      font-weight: 300;
+      letter-spacing: -0.04em;
+      color: #2d2d2d;
+    }
+
+    .celebration {
+      width: min(380px, 90vw);
+      margin: 0 auto;
+      display: block;
+      border-radius: 16px;
+    }
+
+    /* LOVE REASONS CAROUSEL */
+    .carousel-container {
+      margin: 24px auto;
+      max-width: 500px;
+      position: relative;
+    }
+
+    .carousel {
+      background: linear-gradient(135deg, #ffffff, var(--bg2));
+      border-radius: 20px;
+      padding: 36px 28px;
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 20px rgba(255,179,217,.15);
+      border: 1px solid rgba(255,179,217,.2);
+    }
+
+    .carousel-text {
+      font-size: clamp(19px, 3.2vw, 24px);
+      line-height: 1.7;
+      color: #374151;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+
+    .carousel-nav {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .carousel-btn {
+      position: static;
+      transform: none;
+      background: var(--yes);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 24px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 500;
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+      min-height: 44px;
+      min-width: 110px;
+      letter-spacing: -0.01em;
+    }
+
+    .carousel-btn:hover {
+      background: var(--yesHover);
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(255,179,217,.3);
+    }
+
+    .carousel-btn:focus-visible {
+      outline: 3px solid #ff99cc;
+      outline-offset: 2px;
+    }
+
+    .carousel-btn:active {
+      transform: scale(0.98);
+    }
+
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ddd;
+      transition: background .3s ease;
+    }
+
+    .dot.active {
+      background: var(--yes);
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: clamp(22px, 6vw, 32px);
+        line-height: 1.3;
+      }
+
+      .button-zone {
+        height: 180px;
+      }
+
+      button {
+        padding: 14px 20px;
+        font-size: 16px;
+        min-height: 48px; /* iOS recommended touch target */
+      }
+
+      .carousel-text {
+        font-size: 16px;
+        padding: 0 8px;
+      }
+
+      .countdown {
+        padding: 16px 24px;
+        width: 95%;
+      }
+
+      .countdown-number {
+        font-size: clamp(40px, 10vw, 56px);
+      }
+
+      .carousel-nav {
+        gap: 8px;
+      }
+
+      .carousel-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+        min-width: 90px;
+      }
+    }
+
+    /* Landscape mobile optimization */
+    @media (max-height: 600px) and (orientation: landscape) {
+      .countdown {
+        padding: 12px 20px;
+      }
+
+      .countdown-number {
+        font-size: 36px;
+      }
+
+      .countdown-label {
+        font-size: 12px;
+      }
+
+      .countdown-days-label {
+        font-size: 14px;
+      }
+
+      .art {
+        width: min(180px, 60vw);
+      }
+
+      .button-zone {
+        height: 120px;
+      }
+
+      h1 {
+        font-size: 20px;
+        margin: 8px 0 12px;
+      }
+    }
+
+    /* Reduced motion for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @keyframes pop {
+      from { transform: scale(.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* CHEEKY POPUP */
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .popup-overlay.show {
+      display: flex;
+    }
+
+    .popup {
+      background: white;
+      border-radius: 24px;
+      padding: 40px 32px;
+      max-width: 90%;
+      width: 420px;
+      text-align: center;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+      animation: popupBounce 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      transform-origin: center;
+    }
+
+    .popup-gif {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 20px;
+      display: block;
+      border-radius: 12px;
+    }
+
+    .popup h3 {
+      font-size: 28px;
+      font-weight: 500;
+      margin: 0 0 16px 0;
+      color: #ff99cc;
+      letter-spacing: -0.03em;
+    }
+
+    .popup p {
+      font-size: 17px;
+      line-height: 1.6;
+      color: #6b7280;
+      margin: 0 0 28px 0;
+      font-weight: 400;
+    }
+
+    .popup-btn {
+      position: static;
+      transform: none;
+      background: linear-gradient(135deg, var(--yes), var(--accent));
+      color: white;
+      border: none;
+      padding: 16px 36px;
+      border-radius: 28px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(255, 179, 217, 0.4);
+      transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+      min-height: 52px;
+      letter-spacing: -0.01em;
+    }
+
+    .popup-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 32px rgba(255, 179, 217, 0.5);
+    }
+
+    .popup-btn:active {
+      transform: scale(0.98);
+    }
+
+    .popup-btn:focus-visible {
+      outline: 3px solid #ff99cc;
+      outline-offset: 3px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes popupBounce {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes rotate {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-15deg); }
+      75% { transform: rotate(15deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="confettiCanvas"></canvas>
+
+  <main class="card">
+    <!-- COUNTDOWN TIMER -->
+    <div class="countdown" role="timer" aria-live="polite" aria-atomic="true">
+      <div class="countdown-label" aria-label="Time spent together">Days together <span class="emoji">💕</span></div>
+      <div class="countdown-number" id="daysCount" aria-label="Days together">0</div>
+      <div class="countdown-days-label">days</div>
+    </div>
+
+    <!-- ANIMAL GIF -->
+    <img 
+      class="art" 
+      src="nailong.gif" 
+      alt="art"
+    />
+
+    <h1 id="question">Kien Wei, will you be my Valentine?</h1>
+
+    <section class="button-zone" id="zone" aria-labelledby="question">
+      <button id="yesBtn" aria-label="Say yes to being my Valentine">Yes</button>
+      <button id="noBtn" aria-label="Try to say no (but the button will run away)">No</button>
+    </section>
+
+    <section class="result" id="result" aria-live="assertive" aria-atomic="true">
+      <h2>I know you will say YES <span class="emoji">🎉</span></h2>
+      <img
+        class="celebration"
+        src="celebration.jpg"
+        alt="Celebration"
+      />
+
+      <!-- LOVE REASONS CAROUSEL -->
+      <div class="carousel-container">
+        <div class="carousel" role="region" aria-label="Reasons why I love you" aria-live="polite">
+          <p class="carousel-text" id="carouselText">Loading...</p>
+        </div>
+        <nav class="carousel-nav" aria-label="Carousel navigation">
+          <button class="carousel-btn" id="prevBtn" aria-label="Previous reason">← Previous</button>
+          <button class="carousel-btn" id="nextBtn" aria-label="Next reason">Next →</button>
+        </nav>
+        <div class="carousel-dots" role="tablist" aria-label="Carousel position indicators" id="carouselDots"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- CHEEKY POPUP -->
+  <div class="popup-overlay" id="popupOverlay" role="dialog" aria-labelledby="popupTitle" aria-describedby="popupMessage">
+    <div class="popup">
+      <img class="popup-gif" src="disappointed.gif" alt="Disappointed reaction" />
+      <h3 id="popupTitle">Nice try!</h3>
+      <p id="popupMessage">The "No" button is just playing hard to get... just like you! <span class="emoji">💕</span></p>
+      <button class="popup-btn" id="popupClose" aria-label="Close popup">Got it! <span class="emoji">😄</span></button>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- COUNTDOWN TIMER ---------- */
+    const anniversaryDate = new Date('2024-07-03T00:00:00');
+    
+    function updateCountdown() {
+      const now = new Date();
+      const diffTime = now - anniversaryDate;
+      
+      // Calculate days only
+      const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Update display
+      document.getElementById('daysCount').textContent = days;
+    }
+    
+    updateCountdown();
+    setInterval(updateCountdown, 3600000); // Update every hour (days don't change that often)
+
+    /* ---------- LOVE REASONS CAROUSEL ---------- */
+    // CUSTOMIZE THESE WITH YOUR OWN REASONS! 💕
+    const loveReasons = [
+      "You make every day brighter just by being in it ☀️",
+      "You understand me like no one else does 💭",
+      "Being with you feels like coming home 🏡",
+      "You inspire me to be a better person every day 🌟",
+      "I love how we can be silly together 😄",
+      "With you, I can truly be myself 💫"
+    ];
+
+    let currentReasonIndex = 0;
+    const carouselText = document.getElementById('carouselText');
+    const carouselDots = document.getElementById('carouselDots');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function createDots() {
+      carouselDots.innerHTML = '';
+      loveReasons.forEach((_, index) => {
+        const dot = document.createElement('button');
+        dot.className = 'dot';
+        dot.setAttribute('role', 'tab');
+        dot.setAttribute('aria-label', `Go to reason ${index + 1}`);
+        dot.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+        dot.style.border = 'none';
+        dot.style.cursor = 'pointer';
+        dot.style.padding = '4px';
+        if (index === 0) dot.classList.add('active');
+        
+        dot.addEventListener('click', () => {
+          currentReasonIndex = index;
+          updateCarousel();
+        });
+        
+        carouselDots.appendChild(dot);
+      });
+    }
+
+    function updateCarousel() {
+      carouselText.textContent = loveReasons[currentReasonIndex];
+      
+      // Update dots
+      const dots = carouselDots.querySelectorAll('.dot');
+      dots.forEach((dot, index) => {
+        const isActive = index === currentReasonIndex;
+        dot.classList.toggle('active', isActive);
+        dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+      
+      // Announce to screen readers
+      carouselText.setAttribute('aria-label', `Reason ${currentReasonIndex + 1} of ${loveReasons.length}: ${loveReasons[currentReasonIndex]}`);
+    }
+
+    function nextReason() {
+      currentReasonIndex = (currentReasonIndex + 1) % loveReasons.length;
+      updateCarousel();
+    }
+
+    function prevReason() {
+      currentReasonIndex = (currentReasonIndex - 1 + loveReasons.length) % loveReasons.length;
+      updateCarousel();
+    }
+
+    prevBtn.addEventListener('click', prevReason);
+    nextBtn.addEventListener('click', nextReason);
+
+    // Keyboard navigation for carousel
+    document.addEventListener('keydown', (e) => {
+      // Only if result section is visible
+      if (result.style.display === 'block') {
+        if (e.key === 'ArrowLeft') {
+          prevReason();
+        } else if (e.key === 'ArrowRight') {
+          nextReason();
+        }
+      }
+    });
+
+    createDots();
+    updateCarousel();
+
+    /* ---------- CONFETTI ---------- */
+    const zone = document.getElementById("zone");
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn = document.getElementById("noBtn");
+    const result = document.getElementById("result");
+    const confettiCanvas = document.getElementById("confettiCanvas");
+
+    function resizeConfettiCanvas() {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      confettiCanvas.width = Math.floor(window.innerWidth * dpr);
+      confettiCanvas.height = Math.floor(window.innerHeight * dpr);
+      confettiCanvas.style.width = "100vw";
+      confettiCanvas.style.height = "100vh";
+    }
+
+    resizeConfettiCanvas();
+    window.addEventListener("resize", resizeConfettiCanvas);
+    window.addEventListener("orientationchange", () => setTimeout(resizeConfettiCanvas, 150));
+
+    const confettiInstance = confetti.create(confettiCanvas, {
+      resize: false,
+      useWorker: true
+    });
+
+    function fullScreenConfetti() {
+      if (typeof confetti === 'undefined') {
+        return;
+      }
+      
+      const end = Date.now() + 1600;
+
+      (function frame() {
+        confettiInstance({
+          particleCount: 12,
+          spread: 90,
+          startVelocity: 45,
+          ticks: 180,
+          origin: { x: Math.random(), y: Math.random() * 0.3 },
+          colors: ['#ffb3d9', '#ff99cc', '#ffc9e3', '#ffe4f0']
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      })();
+
+      setTimeout(() => {
+        confettiInstance({
+          particleCount: 300,
+          spread: 140,
+          startVelocity: 60,
+          ticks: 220,
+          origin: { x: 0.5, y: 0.55 },
+          colors: ['#ffb3d9', '#ff99cc', '#ffc9e3', '#ffe4f0']
+        });
+      }, 300);
+    }
+
+    /* ---------- YES BUTTON GROWS ---------- */
+    let yesScale = 1;
+    function growYes() {
+      yesScale = Math.min(2.2, yesScale + 0.1);
+      yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
+    }
+
+    /* ---------- NO BUTTON RUNS AWAY ---------- */
+    function clamp(n, min, max) {
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function moveNo(px, py) {
+      const z = zone.getBoundingClientRect();
+      const b = noBtn.getBoundingClientRect();
+
+      let dx = (b.left + b.width / 2) - px;
+      let dy = (b.top + b.height / 2) - py;
+      let mag = Math.hypot(dx, dy) || 1;
+      dx /= mag;
+      dy /= mag;
+
+      let newLeft = (b.left - z.left) + dx * 150;
+      let newTop  = (b.top - z.top) + dy * 150;
+
+      newLeft = clamp(newLeft, 0, z.width - b.width);
+      newTop  = clamp(newTop, 0, z.height - b.height);
+
+      noBtn.style.left = newLeft + "px";
+      noBtn.style.top = newTop + "px";
+      noBtn.style.transform = "none";
+
+      growYes();
+    }
+
+    zone.addEventListener("pointermove", e => {
+      const b = noBtn.getBoundingClientRect();
+      const d = Math.hypot(
+        (b.left + b.width / 2) - e.clientX,
+        (b.top + b.height / 2) - e.clientY
+      );
+      if (d < 140) moveNo(e.clientX, e.clientY);
+    });
+
+    noBtn.addEventListener("click", e => e.preventDefault());
+
+    /* ---------- CHEEKY POPUP ---------- */
+    const popupOverlay = document.getElementById('popupOverlay');
+    const popupClose = document.getElementById('popupClose');
+    const popupMessage = document.getElementById('popupMessage');
+    
+    // Array of cheeky messages (emojis will be wrapped in HTML)
+    const cheekyMessages = [
+      'The "No" button is shy! Maybe try the other one? <span class="emoji">😉</span>',
+      'Nice try! But I think you meant to click "Yes"! <span class="emoji">💖</span>',
+      'The universe says that\'s not the right answer! <span class="emoji">✨</span>',
+      'Even the button knows you want to say yes! <span class="emoji">💝</span>',
+      'Plot twist: The "No" button doesn\'t work here! <span class="emoji">😜</span>'
+    ];
+    
+    let clickCount = 0;
+    
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      
+      // Show popup with random message
+      const randomMessage = cheekyMessages[Math.floor(Math.random() * cheekyMessages.length)];
+      popupMessage.innerHTML = randomMessage; // Use innerHTML to render the emoji spans
+      
+      popupOverlay.classList.add('show');
+      popupClose.focus(); // Focus the close button for accessibility
+      
+      clickCount++;
+      
+      // After 3 tries, make the Yes button even bigger!
+      if (clickCount >= 3) {
+        yesScale = Math.min(2.5, yesScale + 0.15);
+        yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
+      }
+    });
+    
+    // Close popup
+    function closePopup() {
+      popupOverlay.classList.remove('show');
+      noBtn.focus(); // Return focus to No button
+    }
+    
+    popupClose.addEventListener('click', closePopup);
+    
+    // Close popup on overlay click
+    popupOverlay.addEventListener('click', (e) => {
+      if (e.target === popupOverlay) {
+        closePopup();
+      }
+    });
+    
+    // Close popup on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && popupOverlay.classList.contains('show')) {
+        closePopup();
+      }
+    });
+
+    /* ---------- YES CLICK ---------- */
+    yesBtn.addEventListener("click", () => {
+      try {
+        zone.style.display = "none";
+        result.style.display = "block";
+        
+        resizeConfettiCanvas();
+        fullScreenConfetti();
+      } catch (error) {
+        // Still show the result even if confetti fails
+        zone.style.display = "none";
+        result.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>
